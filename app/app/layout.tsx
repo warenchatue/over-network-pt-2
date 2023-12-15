@@ -9,6 +9,7 @@ import { newUserSchema } from '@/lib/zod';
 import { dropUser, getNumberOfUsers, storeUser } from '@/lib/storage';
 import { createProfile, newPrivateKey } from '@/lib/contract';
 import LoginWindow from './loginWindow';
+import { User } from '@/lib/types';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -57,6 +58,7 @@ export default async function RootLayout({
     /*
       TODO #1: Indicate that this function is a server function by adding 'use server';
     */
+   'use server';
 
     /*
       TODO #2: Create the new User object with a username, name, and privateKey
@@ -65,13 +67,21 @@ export default async function RootLayout({
         - 
         - Use the newPrivateKey() function to generate a new private key for the user
     */
+    const newUser: User = {
+      username: form.get("username")!.toString(),
+      name: form.get("name")!.toString(),
+      imgSrc: undefined,
+      followers: 0,
+      following: 0,
+      privateKey: newPrivateKey()
+    };
 
     /* 
       TODO #3: Store the user in the local account cache
 
       HINT: Use the storeUser() function to store the user
     */
-
+    storeUser(newUser);
     /* 
       TODO #4: Set up a try catch block to create the user's profile and log them in if successful.
 
@@ -83,6 +93,13 @@ export default async function RootLayout({
           from the local account cache. Then, throw the error to be caught by the catch block in
           the loginWindow.tsx file.
     */
+    try {
+      createProfile(newUser);
+      login(newUser);
+    }
+    catch(error){
+      dropUser(newUser);
+    }
   }
 
   if (!me) {
